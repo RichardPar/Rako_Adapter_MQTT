@@ -15,9 +15,9 @@ Working <br>
   * Events from RAKO (Scene and lightint values) <br>
   
   
-Rooms are to be configured from 1 to 32 (If you want more, then change the values) 
+Rooms are to be configured from 1 to 32 (If you want more, then change the values) - Scenes are set in the RAKO unit
 
-rako_adapter -r <RAKO ip address> -m <MQTT IP> -u <MQTT Username> -p <MQTT Password
+rako_adapter -r [RAKO ip address] -m [MQTT IP] -u [MQTT Username] -p [MQTT Password]
 
 
 Product_Type:           Hub<br>
@@ -40,4 +40,6 @@ Room 3 [LIGHT] plant room<br>
 Room 5 [LIGHT] dining<br>
 	Channel 2	Dining room pendants<br>
 	Channel 3	dining downlights<br>
+	
+![HomeAssistant](RAko.png)
 
