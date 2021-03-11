@@ -1,0 +1,1 @@
+./Debug/mqtt.c.o ./Debug/main.c.o ./Debug/socketclient.c.o
