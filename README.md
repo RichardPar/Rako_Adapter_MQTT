@@ -41,5 +41,6 @@ Room 5 [LIGHT] dining<br>
 	Channel 2	Dining room pendants<br>
 	Channel 3	dining downlights<br>
 	
+![HomeAssistant](rako_k.png)	
 ![HomeAssistant](RAko.png)
 
