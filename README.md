@@ -5,10 +5,10 @@ Created on Linux using CodeLite IDE and Qmake based.
 #For the RAKO HUB Lighting controller to HomeAssistant MQTT interface
  
 Working <br>
-  Config Discovery pushing to HomeAssistant<br>
-  Individual lights controllable (16 Channels)<br> 
-  5 SCENE switches... SCENE 0 should be set to OFF<br>
-  Events from RAKO (Scene and lightint values) <br>
+  * Config Discovery pushing to HomeAssistant<br>
+  * Individual lights controllable (16 Channels)<br> 
+  * 5 SCENE switches... SCENE 0 should be set to OFF<br>
+  * Events from RAKO (Scene and lightint values) <br>
   
   
 Rooms are to be configured from 1 to 32 (If you want more, then change the values) 
