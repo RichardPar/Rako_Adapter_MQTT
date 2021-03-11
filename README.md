@@ -2,7 +2,9 @@
 
 Created on Linux using CodeLite IDE and Qmake based.
 
-#For the RAKO HUB Lighting controller to HomeAssistant MQTT interface
+#For the RAKO HUB Lighting controller to HomeAssistant MQTT interface<br>
+
+This is a work in progress..... your mileage may vary... it was written in a day as a test.. it worked awesomely
  
 Working <br>
   * Config Discovery pushing to HomeAssistant<br>
