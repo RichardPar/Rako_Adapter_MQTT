@@ -75,7 +75,8 @@ struct rooms_t {
 struct rako_data_t {
     char state;
     int counter;
-
+    int last_send;
+    int keepalive_counter;
     char buffer[32768*4];
     int buffer_ptr;
     json_object *rx_json;
@@ -190,6 +191,8 @@ int main(int argc, char **argv)
         exit(0);
     }
 
+    rako_data.last_send = -1;
+    rako_data.keepalive_counter=0;
     strncpy(rako_data.rako_address,rako_address,63);
 
     printf("Connecting to MQTT %s [Username=%s]\r\n",mqtt_address,mqtt_user);
@@ -320,6 +323,17 @@ int rako_idle_callback(void *pvt,struct socket_client_t* sp)
 
     struct rako_data_t *param = pvt;
 
+
+    if (param->last_send > 0)
+    {
+       param->last_send--; 
+    } else if (param->last_send==0)
+    {
+        param->last_send=-1;
+        return -1;
+    }
+
+
     if (param->state == 1) {
         socket_client_write(sp,"\r\n{\"name\":\"status\",\"payload\":{}}\r\n",33);
         param->state++;
@@ -336,6 +350,14 @@ int rako_idle_callback(void *pvt,struct socket_client_t* sp)
 
 
     param->counter++;
+    param->keepalive_counter++;
+    
+    if (param->keepalive_counter == 1000) {
+        socket_client_write(sp,"\r\n{\"name\":\"status\",\"payload\":{}}\r\n",33);
+        param->keepalive_counter=0;
+        param->last_send=500;
+    }
+
     if (param->counter == 30000) {
         param->state=4;
         param->counter=0;
@@ -608,6 +630,7 @@ int parse_status(void *pvt, struct socket_client_t *sp)
     json_object *returnObj;
     json_object *valueObj;
 
+    printf("Got Status....its ALIVE!\r\n");
     rc = json_object_object_get_ex(param->rx_json, "payload", &returnObj);
     if (rc == 1) {
         char *value;
@@ -628,6 +651,7 @@ int parse_status(void *pvt, struct socket_client_t *sp)
         value = json_object_get_string(valueObj);
         strncpy(param->hub_version,value,15);
 
+        param->last_send=-1;
         rc = 0;
     }
 

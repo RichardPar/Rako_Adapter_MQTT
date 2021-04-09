@@ -127,7 +127,15 @@ void* socket_client_main_thread(void* paramPtr)
                 }
             } else { // Got a reponse for something!
                 if (params->func_idle != NULL) {
-                    params->func_idle(params->pvt,params);
+                    rc = params->func_idle(params->pvt,params);
+                    if (rc < 0 )
+                    {
+                        close(params->sock);
+                        params->sock = -1;
+                        params->state = 0;
+                        continue;
+                    }
+                    
                 }
             }
         } // End of state == 2
