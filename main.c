@@ -33,6 +33,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 #include <unistd.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <syslog.h>
 
 #include <json-c/json.h>
 #include "socketclient.h"
@@ -96,22 +97,22 @@ struct rako_data_t {
 void dump_settings(struct rako_data_t *rako_data)
 {
 
-    printf("Product_Type:\t\t%s\r\n",rako_data->product_type);
-    printf("Product_HubId:\t\t%s\r\n",rako_data->hub_id);
-    printf("Product_MAC:\t\t%s\r\n",rako_data->hub_mac);
-    printf("Product_Version:\t%s\r\n",rako_data->hub_version);
+   syslog(LOG_NOTICE,"Product_Type:\t\t%s\r\n",rako_data->product_type);
+   syslog(LOG_NOTICE,"Product_HubId:\t\t%s\r\n",rako_data->hub_id);
+   syslog(LOG_NOTICE,"Product_MAC:\t\t%s\r\n",rako_data->hub_mac);
+   syslog(LOG_NOTICE,"Product_Version:\t%s\r\n",rako_data->hub_version);
 
     int a;
     for (a=0; a<MAX_ROOMS; a++) {
         if (rako_data->rooms[a].enabled == 1) {
-            printf("Room %d [%s] %s\r\n",a,rako_data->rooms[a].device_type,rako_data->rooms[a].room_name);
+           syslog(LOG_NOTICE,"Room %d [%s] %s\r\n",a,rako_data->rooms[a].device_type,rako_data->rooms[a].room_name);
             int b;
             for (b=0; b<MAX_CHANNELS; b++) {
                 if (rako_data->rooms[a].channels[b].enabled == 1) {
-                    printf("\tChannel %d\t%s\r\n",b,rako_data->rooms[a].channels[b].channel_name);
+                   syslog(LOG_NOTICE,"\tChannel %d\t%s\r\n",b,rako_data->rooms[a].channels[b].channel_name);
                 }
             }
-            printf("\r\n");
+           syslog(LOG_NOTICE,"\r\n");
         }
     }
     return;
@@ -130,8 +131,8 @@ int isThisAHub(struct rako_data_t *rako_data)
 
 void print_usage(void)
 {
-    printf("Usage\r\n");
-    printf("rako_adapter -r <RAKO ip address> -m <MQTT IP> -u <MQTT Username> -p <MQTT Password\r\n");
+   syslog(LOG_NOTICE,"Usage\r\n");
+   syslog(LOG_NOTICE,"rako_adapter -r <RAKO ip address> -m <MQTT IP> -u <MQTT Username> -p <MQTT Password\r\n");
 
     return;
 }
@@ -191,11 +192,13 @@ int main(int argc, char **argv)
         exit(0);
     }
 
+    openlog ("RAKO_MQTT", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+
     rako_data.last_send = -1;
     rako_data.keepalive_counter=0;
     strncpy(rako_data.rako_address,rako_address,63);
 
-    printf("Connecting to MQTT %s [Username=%s]\r\n",mqtt_address,mqtt_user);
+   syslog(LOG_NOTICE,"Connecting to MQTT %s [Username=%s]\r\n",mqtt_address,mqtt_user);
 
 
 
@@ -203,7 +206,7 @@ int main(int argc, char **argv)
     int rc = mqtt_connect(mqtt_address,CLIENTID,mqtt_user,mqtt_password);
 
     if (rc < 0) {
-        printf("Could not connect to MQTT\r\n");
+       syslog(LOG_NOTICE,"Could not connect to MQTT\r\n");
         exit(0);
     }
 
@@ -275,7 +278,8 @@ int mqtt_homeassistant_callback(char *node,char *msg, int len, void *p)
 
             param->rooms[room].current_scene=scene;
             send_scene(param->socket_pvt,room,scene);
-
+            send_scene(param->socket_pvt,room,scene);
+  
         } else {
 
             if (strcmp(state,"OFF")==0) {
@@ -290,9 +294,10 @@ int mqtt_homeassistant_callback(char *node,char *msg, int len, void *p)
             }
 
             send_level((struct socket_client_t*) param->socket_pvt,room,channel,level);
+            send_level((struct socket_client_t*) param->socket_pvt,room,channel,level);
         }
 
-        printf("Room %d - Channel %d [scene=%d]\r\n",room,channel,scene);
+       syslog(LOG_NOTICE,"Room %d - Channel %d [scene=%d]\r\n",room,channel,scene);
     }
 }
 
@@ -514,7 +519,7 @@ int parse_query_levels(void *pvt, struct socket_client_t *sp)
                 continue;
             json_object_object_get_ex(itemObj, "channel", &levelsArrayObj);
             int levelArrayCount = json_object_array_length(levelsArrayObj);
-            printf("Room %d  %s\r\n",index,param->rooms[index].room_name);
+           syslog(LOG_NOTICE,"Room %d  %s\r\n",index,param->rooms[index].room_name);
 
             for (p=0; p<levelArrayCount; p++) {
                 levelsObj  = json_object_array_get_idx(levelsArrayObj, p);
@@ -524,7 +529,7 @@ int parse_query_levels(void *pvt, struct socket_client_t *sp)
                     continue;
                 json_object_object_get_ex(levelsObj, "currentLevel", &valueObj);
                 int level = json_object_get_int(valueObj);
-                printf("\tChannel %d Level=%d\r\n",channelid,level);
+               syslog(LOG_NOTICE,"\tChannel %d Level=%d\r\n",channelid,level);
                 publish_state(index,channelid,level);
             }
         }
@@ -630,7 +635,7 @@ int parse_status(void *pvt, struct socket_client_t *sp)
     json_object *returnObj;
     json_object *valueObj;
 
-    printf("Got Status....its ALIVE!\r\n");
+   syslog(LOG_NOTICE,"Got Status....its ALIVE!\r\n");
     rc = json_object_object_get_ex(param->rx_json, "payload", &returnObj);
     if (rc == 1) {
         char *value;
@@ -685,7 +690,7 @@ int parse_tracker(void *pvt, struct socket_client_t *sp)
         json_object_object_get_ex(returnObj, "targetLevel", &valueObj);
 
         int level = json_object_get_int(valueObj);
-        printf("Room %d - Channel %d - Target %d\r\n",index,channel,level);
+       syslog(LOG_NOTICE,"Room %d - Channel %d - Target %d\r\n",index,channel,level);
         publish_state(index,channel,level);
         rc=0;
     }
@@ -724,7 +729,7 @@ int parse_feedback(void *pvt, struct socket_client_t *sp)
             json_object_object_get_ex(actionObj, "command", &valueObj);
             int command = json_object_get_int(valueObj);
 
-            printf("Setting scene %d on Room %d\r\n",scene,index);
+           syslog(LOG_NOTICE,"Setting scene %d on Room %d\r\n",scene,index);
 
             update_scene(index,0,scene);
         }
