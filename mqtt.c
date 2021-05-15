@@ -160,7 +160,8 @@ int mqtt_connect(char* url, char* clientid, char *username, char *password)
     MQTTAsync_connectOptions conn_opts = MQTTAsync_connectOptions_initializer;
 
     
-    MQTTAsync_create(&client, url, clientid, MQTTCLIENT_PERSISTENCE_DEFAULT, NULL);
+    rc = MQTTAsync_create(&client,url,clientid, MQTTCLIENT_PERSISTENCE_DEFAULT, NULL);
+    
     conn_opts.keepAliveInterval = 30;
     conn_opts.cleansession = 1;
     conn_opts.automaticReconnect=1;
@@ -170,10 +171,7 @@ int mqtt_connect(char* url, char* clientid, char *username, char *password)
     conn_opts.onSuccess = onConnect;
     conn_opts.onFailure = onFailure;
     
-    
-    rc = MQTTAsync_create(&client,url,CLIENTID, MQTTCLIENT_PERSISTENCE_NONE, NULL);
 	MQTTAsync_setCallbacks(client, client, connlost, messageArrived, NULL);
-    
     
     if((rc = MQTTAsync_connect(client, &conn_opts)) != MQTTASYNC_SUCCESS) {
        syslog(LOG_NOTICE,"Failed to connect, return code %d\n", rc);

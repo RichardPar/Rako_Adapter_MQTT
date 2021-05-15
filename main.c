@@ -239,12 +239,23 @@ int mqtt_homeassistant_callback(char *node,char *msg, int len, void *p)
     json_object* rx_json;
     json_object* returnObj;
     char *state;
+    char echo_string[45];
 
+    
+
+    
+    
+    
     int rc = tokenize(tokens,10,node,'/');
 
     if (rc == 4) {
         char newstring[128];
         int level;
+
+        //homeassistant/light/rako_%d_%d_%d/state
+         sprintf(echo_string,"%s/%s/%s/state",tokens[0],tokens[1],tokens[2]);
+         mqtt_writedata(echo_string,msg);
+    
 
 
         rx_json = json_tokener_parse(msg);
@@ -267,10 +278,12 @@ int mqtt_homeassistant_callback(char *node,char *msg, int len, void *p)
 
 
         int scene=-1;
+        int org_scene = -1;
         int room = atol(rako_tokens[1]);
         int channel = atol(rako_tokens[2]);
         if (channel == 0) {
             scene = atol(rako_tokens[3]);
+            org_scene=scene;
 
             if (strcmp(state,"OFF")==0) {
                 scene=0;
@@ -278,8 +291,8 @@ int mqtt_homeassistant_callback(char *node,char *msg, int len, void *p)
 
             param->rooms[room].current_scene=scene;
             send_scene(param->socket_pvt,room,scene);
-            send_scene(param->socket_pvt,room,scene);
-  
+            //update_scene(room,0,scene);
+            
         } else {
 
             if (strcmp(state,"OFF")==0) {
@@ -294,9 +307,7 @@ int mqtt_homeassistant_callback(char *node,char *msg, int len, void *p)
             }
 
             send_level((struct socket_client_t*) param->socket_pvt,room,channel,level);
-            send_level((struct socket_client_t*) param->socket_pvt,room,channel,level);
         }
-
        syslog(LOG_NOTICE,"Room %d - Channel %d [scene=%d]\r\n",room,channel,scene);
     }
 }
@@ -801,12 +812,13 @@ void update_scene(int roomid,int channel_id,int scene)
             sprintf(onoff,"ON");
         }
 
-        sprintf(discover," { \"state\" : \"%s\" } ",onoff,onoff);
+        sprintf(discover," { \"state\" : \"%s\" } ",onoff);
         //printf("TAG : %s [State->%s]\r\n",tag,discover);
         mqtt_writedata(tag,discover);
-        usleep(1000);
     }
 }
+
+
 
 
 void publish_state(int roomid,int channel_id,int level)
